@@ -74,9 +74,21 @@ RUN mkdir -p ${PYTHONPATH} superset/static superset-frontend apache_superset.egg
         libpq-dev \
         libecpg-dev \
         libldap2-dev \
+        libaio1 wget unzip \    ## for oracle
     && apt-get autoremove -yqq --purge && rm -rf /var/lib/apt/lists/* /var/[log,tmp]/* /tmp/* && apt-get clean \
     && touch superset/static/version_info.json \
     && chown -R superset:superset ./*
+
+######## install oracle shit, info from https://stackoverflow.com/a/59869379
+WORKDIR    /opt/oracle
+RUN        wget https://download.oracle.com/otn_software/linux/instantclient/instantclient-basiclite-linuxx64.zip \
+            && unzip instantclient-basiclite-linuxx64.zip \
+            && rm -f instantclient-basiclite-linuxx64.zip \
+            && cd /opt/oracle/instantclient* \
+            && rm -f *jdbc* *occi* *mysql* *README *jar uidrvci genezi adrci \
+            && echo /opt/oracle/instantclient* > /etc/ld.so.conf.d/oracle-instantclient.conf \
+            && ldconfig
+WORKDIR    /app        ## restore workdir
 
 COPY --chown=superset:superset ./requirements/*.txt requirements/
 COPY --chown=superset:superset setup.py MANIFEST.in README.md ./
